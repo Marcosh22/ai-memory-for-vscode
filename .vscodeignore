@@ -1,0 +1,14 @@
+.vscode/**
+.claude/**
+.agents/**
+.codex/**
+.git/**
+src/**
+out/test/**
+out/**/*.map
+node_modules/**
+docs/**
+tsconfig.json
+.gitignore
+.ai-memory-token
+**/*.vsix

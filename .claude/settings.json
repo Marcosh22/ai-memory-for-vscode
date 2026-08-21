@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npm test *)",
+      "Bash(node --test out/test/scope.test.js)",
+      "Bash(cd \"c:/Users/MarcosHenrique/Documents/D3/Projects/AI Memory for VSCode\")",
+      "Bash(cat .ai-memory-token)",
+      "Bash(echo \"=== busca escopada, ordenacao por rank ===\")",
+      "Bash(curl -s --max-time 5 -H 'Authorization: Bearer __TRACKED_VAR__' 'http://127.0.0.1:49374/api/v1/search?q=provider&workspace=default&project=scratch&limit=10')",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const h=JSON.parse\\(d\\);console.log\\('hits:',h.length\\);h.forEach\\(x=>console.log\\('  '+x.workspace+'/'+x.project,'|',x.title\\)\\);}\\)\")",
+      "Bash(echo \"=== busca global sem escopo \\(termo existente\\) ===\")",
+      "Bash(curl -s --max-time 5 -H 'Authorization: Bearer __TRACKED_VAR__' 'http://127.0.0.1:49374/api/v1/search?q=provider&limit=10')",
+      "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\('ok —',p.contributes.commands.length,'comandos,',Object.keys\\(p.contributes\\).length,'pontos de contribuicao'\\)\")"
+    ]
+  }
+}

@@ -1,0 +1,220 @@
+{
+  "name": "ai-memory-vscode",
+  "displayName": "AI Memory",
+  "description": "Compartilhe o contexto do projeto entre Claude Code, Codex e GitHub Copilot.",
+  "icon": "resources/ai-memory-icon.png",
+  "galleryBanner": {
+    "color": "#17103D",
+    "theme": "dark"
+  },
+  "version": "0.0.2",
+  "publisher": "Marcosh22",
+  "private": true,
+  "license": "MIT",
+  "keywords": [
+    "ai",
+    "memory",
+    "claude",
+    "codex",
+    "copilot",
+    "mcp"
+  ],
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "aiMemory.servers",
+        "label": "AI Memory"
+      }
+    ],
+    "configuration": {
+      "title": "AI Memory",
+      "properties": {
+        "aiMemory.serverUrl": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "URL base do servidor ai-memory. Vazio usa a precedência padrão: `AI_MEMORY_SERVER_URL`, depois `http://127.0.0.1:49374`.",
+          "scope": "machine-overridable"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aiMemory",
+          "title": "AI Memory",
+          "icon": "resources/ai-memory-activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "aiMemory": [
+        {
+          "id": "aiMemory.memory",
+          "name": "Memória",
+          "icon": "resources/ai-memory-activity.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "aiMemory.setup",
+        "title": "AI Memory: Configurar",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "aiMemory.search",
+        "title": "AI Memory: Buscar na memória",
+        "icon": "$(search)"
+      },
+      {
+        "command": "aiMemory.refresh",
+        "title": "AI Memory: Atualizar",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aiMemory.showHandoff",
+        "title": "AI Memory: Ver handoff aberto"
+      },
+      {
+        "command": "aiMemory.installRouting",
+        "title": "AI Memory: Instalar roteamento nas instruções do Copilot"
+      },
+      {
+        "command": "aiMemory.openPage",
+        "title": "AI Memory: Abrir página"
+      },
+      {
+        "command": "aiMemory.checkConnection",
+        "title": "AI Memory: Verificar conexão"
+      },
+      {
+        "command": "aiMemory.setToken",
+        "title": "AI Memory: Definir token de acesso"
+      },
+      {
+        "command": "aiMemory.clearToken",
+        "title": "AI Memory: Remover token de acesso"
+      },
+      {
+        "command": "aiMemory.startServer",
+        "title": "AI Memory: Iniciar servidor em um terminal"
+      },
+      {
+        "command": "aiMemory.selectFolder",
+        "title": "AI Memory: Trocar projeto ativo"
+      },
+      {
+        "command": "aiMemory.showLog",
+        "title": "AI Memory: Abrir log"
+      },
+      {
+        "command": "aiMemory.actions",
+        "title": "AI Memory: Ações"
+      },
+      {
+        "command": "aiMemory.githubSync",
+        "title": "AI Memory: Gerenciar GitHub Sync",
+        "icon": "$(cloud)"
+      },
+      {
+        "command": "aiMemory.githubSyncConfigure",
+        "title": "AI Memory: Configurar GitHub Sync"
+      },
+      {
+        "command": "aiMemory.githubSyncPull",
+        "title": "AI Memory: GitHub Sync - Pull"
+      },
+      {
+        "command": "aiMemory.githubSyncPush",
+        "title": "AI Memory: GitHub Sync - Push"
+      },
+      {
+        "command": "aiMemory.githubSyncNow",
+        "title": "AI Memory: Sincronizar com GitHub"
+      },
+      {
+        "command": "aiMemory.explainUnknownProject",
+        "title": "AI Memory: Explicar projeto não encontrado"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "aiMemory.explainUnknownProject",
+          "when": "false"
+        },
+        {
+          "command": "aiMemory.openPage",
+          "when": "false"
+        },
+        {
+          "command": "aiMemory.githubSyncConfigure",
+          "when": "false"
+        },
+        {
+          "command": "aiMemory.githubSyncPull",
+          "when": "false"
+        },
+        {
+          "command": "aiMemory.githubSyncPush",
+          "when": "false"
+        },
+        {
+          "command": "aiMemory.githubSyncNow",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "aiMemory.search",
+          "when": "view == aiMemory.memory",
+          "group": "navigation@1"
+        },
+        {
+          "command": "aiMemory.refresh",
+          "when": "view == aiMemory.memory",
+          "group": "navigation@2"
+        },
+        {
+          "command": "aiMemory.setup",
+          "when": "view == aiMemory.memory",
+          "group": "navigation@3"
+        },
+        {
+          "command": "aiMemory.githubSync",
+          "when": "view == aiMemory.memory",
+          "group": "navigation@4"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "aiMemory.search",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "tsc -p ./ && node --test \"out/test/*.test.js\"",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/vscode": "^1.101.0",
+    "typescript": "^5.8.3"
+  }
+}
