@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 (pré-release) — 2026-08-22
+
+### Corrigido
+
+- GitHub Sync agora aceita tipos novos de página emitidos pelo ai-memory, como `lint-report`.
+
 ## 0.1.0 (pré-release) — 2026-08-22
 
 Primeiro release beta voltado à continuidade entre agentes e máquinas.

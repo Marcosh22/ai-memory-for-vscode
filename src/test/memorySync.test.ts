@@ -52,6 +52,23 @@ describe('bundle portátil', () => {
     assert.notEqual(first.hash, changed.hash);
   });
 
+  it('aceita novos tipos de página emitidos pelo ai-memory', async () => {
+    const root = temporaryDirectory();
+    const lintReport = portablePage({
+      path: '_lint/2026-08-22.md',
+      title: 'Lint report',
+      kind: 'lint-report',
+      tier: 'semantic',
+      pinned: false,
+      tags: [],
+      body: '# Lint report',
+    });
+
+    writeMemoryBundle(root, bundle(lintReport));
+
+    assert.equal((await readMemoryBundle(root)).pages[0]?.kind, 'lint-report');
+  });
+
   it('recusa arquivo alterado fora do manifesto', async () => {
     const root = temporaryDirectory();
     writeMemoryBundle(root, bundle(page('notes/a.md', '# A')));

@@ -54,7 +54,7 @@ export interface ProjectSummary {
  * `sessions/`, `decisions/`, `gotchas/`, `concepts/`, `procedures/`,
  * `notes/`. O resto cai em `fact`.
  */
-export type PageKind =
+export type KnownPageKind =
   | 'rule'
   | 'slot'
   | 'session'
@@ -64,6 +64,9 @@ export type PageKind =
   | 'procedure'
   | 'note'
   | 'fact';
+
+/** O servidor pode acrescentar famílias de página sem exigir nova extensão. */
+export type PageKind = KnownPageKind | (string & {});
 
 export interface PageRef {
   readonly path: string;

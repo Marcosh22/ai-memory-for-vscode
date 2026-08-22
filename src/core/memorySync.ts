@@ -17,17 +17,7 @@ const PAGES_ROOT = `${SYNC_ROOT}/pages`;
 const MAX_MANIFEST_BYTES = 2 * 1024 * 1024;
 const MAX_PAGES = 10_000;
 const MAX_PAGE_BYTES = 2 * 1024 * 1024;
-const PAGE_KINDS = new Set<PageKind>([
-  'rule',
-  'slot',
-  'session',
-  'decision',
-  'gotcha',
-  'concept',
-  'procedure',
-  'note',
-  'fact',
-]);
+const PAGE_KIND_PATTERN = /^[a-z][a-z0-9-]{0,63}$/;
 
 export interface PortablePage {
   readonly path: string;
@@ -387,7 +377,7 @@ function validateManifestPage(value: unknown): asserts value is ManifestPage {
     typeof page?.path !== 'string' ||
     typeof page.title !== 'string' ||
     typeof page.kind !== 'string' ||
-    !PAGE_KINDS.has(page.kind as PageKind) ||
+    !PAGE_KIND_PATTERN.test(page.kind) ||
     typeof page.tier !== 'string' ||
     typeof page.pinned !== 'boolean' ||
     !Array.isArray(page.tags) ||
