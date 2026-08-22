@@ -20,6 +20,7 @@ Primeiro release beta voltado à continuidade entre agentes e máquinas.
 - Falsos conflitos de manifesto causados por conversão LF/CRLF no Windows.
 - Duplicação de hooks do Claude Code.
 - Leitura de handoff sem consumo destrutivo.
+- Finalização de sessão pelo wrapper Docker no Windows: o CLI agora alcança o servidor local pelo host Docker correto.
 
 ### Limitações conhecidas
 

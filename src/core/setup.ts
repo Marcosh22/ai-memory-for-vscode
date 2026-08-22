@@ -384,6 +384,34 @@ export interface CliRun {
 }
 
 /**
+ * O wrapper gerenciado do Windows roda o CLI dentro de um container Docker.
+ * Nesse contexto, `127.0.0.1` aponta para o próprio container, não para o
+ * daemon ai-memory exposto pelo Docker Desktop no host. A extensão em si
+ * continua falando diretamente com o host, portanto a conversão é restrita
+ * ao wrapper gerenciado.
+ */
+export function serverUrlForCli(
+  serverUrl: string | undefined,
+  spec: CommandSpec,
+  platform = process.platform,
+): string | undefined {
+  if (!serverUrl || platform !== 'win32' || spec.source !== 'managed') {
+    return serverUrl;
+  }
+
+  try {
+    const url = new URL(serverUrl);
+    if (!['127.0.0.1', 'localhost', '::1'].includes(url.hostname)) {
+      return serverUrl;
+    }
+    url.hostname = 'host.docker.internal';
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return serverUrl;
+  }
+}
+
+/**
  * Roda um subcomando do CLI. O token vai por ambiente, nunca por argumento —
  * argumentos aparecem na lista de processos do sistema.
  */
@@ -400,11 +428,12 @@ export async function runCli(
   if (options.token) {
     env['AI_MEMORY_AUTH_TOKEN'] = options.token;
   }
-  if (options.serverUrl) {
-    env['AI_MEMORY_SERVER_URL'] = options.serverUrl;
+  const serverUrl = serverUrlForCli(options.serverUrl, spec);
+  if (serverUrl) {
+    env['AI_MEMORY_SERVER_URL'] = serverUrl;
   }
 
-  logger.info(`ai-memory ${args.join(' ')}`);
+  logger.info(`ai-memory ${args.join(' ')}${serverUrl ? ` serverUrl=${serverUrl}` : ''}`);
   try {
     const { stdout, stderr } = await execFileAsync(spec.command, [...spec.args, ...args], {
       timeout: 120000,

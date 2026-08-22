@@ -16,6 +16,7 @@ import {
   detectClaudeHooksAuth,
   detectClaudeMcp,
   detectCopilotRouting,
+  serverUrlForCli,
 } from '../core/setup';
 import { MARKER_END, MARKER_START } from '../core/routing';
 
@@ -48,6 +49,24 @@ function fakeHome(name: string, files: Record<string, string>): string {
 function encodedPowerShell(script: string): string {
   return `powershell.exe -NoProfile -EncodedCommand ${Buffer.from(script, 'utf16le').toString('base64')}`;
 }
+
+describe('URL do CLI gerenciado', () => {
+  const managed = { command: 'powershell.exe', args: [], source: 'managed' as const };
+  const pathCli = { command: 'ai-memory', args: [], source: 'path' as const };
+
+  it('usa o host Docker para o loopback quando o wrapper Windows é gerenciado', () => {
+    assert.equal(
+      serverUrlForCli('http://127.0.0.1:49374', managed, 'win32'),
+      'http://host.docker.internal:49374',
+    );
+  });
+
+  it('não altera a URL da extensão, o CLI do PATH nem um servidor remoto', () => {
+    assert.equal(serverUrlForCli('http://127.0.0.1:49374', pathCli, 'win32'), 'http://127.0.0.1:49374');
+    assert.equal(serverUrlForCli('https://memory.example.com', managed, 'win32'), 'https://memory.example.com');
+    assert.equal(serverUrlForCli('http://localhost:49374', managed, 'linux'), 'http://localhost:49374');
+  });
+});
 
 describe('hooks do Claude Code', () => {
   it('ausentes quando não há settings.json', () => {
