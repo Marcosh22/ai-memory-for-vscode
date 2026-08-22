@@ -9,13 +9,16 @@ o servidor, não mantém uma segunda base de memória e não altera o checkout d
 Claude Code / Codex / Copilot
               │ MCP e hooks
               ▼
-       ai-memory local
+       servidor ai-memory ativo
               │ HTTP API
               ▼
           extensão VS Code
               │
      árvore · busca · handoff · GitHub Sync
 ```
+
+O servidor ativo pode ser local ou compartilhado numa VPS. Há somente um por janela; GitHub Sync
+é transporte/backup de páginas e nunca implementa dual-write entre duas instâncias.
 
 O Copilot recebe um `McpHttpServerDefinitionProvider` da extensão. Claude Code e Codex têm suas
 próprias configurações MCP e hooks, instaladas pelo CLI oficial do `ai-memory` através do onboarding
@@ -53,3 +56,4 @@ as instruções de roteamento orientam a intenção para `ai-memory`.
 
 - [Formas reais da API](api-shapes.md)
 - [Protocolo de sincronização](github-sync.md)
+- [Plano de continuidade entre agentes e máquinas](continuity-plan.md)

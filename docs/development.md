@@ -18,7 +18,16 @@ execução para os testes de contrato e cadeia MCP.
 - `mcp.test.ts` e `e2e.test.ts`: registro, descoberta e execução das tools MCP;
 - `routing.test.ts`: instalação idempotente e preservação do arquivo de instruções;
 - `gitSync.test.ts` e `memorySync.test.ts`: bundle portátil, merge de três vias e conflitos;
+- `continuityFlow.test.ts`: identidade, regra, decisão e checkpoint entre duas máquinas lógicas;
+- `realContinuity.test.ts`: transferência entre dois servidores reais quando as URLs de teste são informadas;
 - `setup.test.ts`: detecção de hooks, MCP, token e roteamento de Claude/Codex/Copilot.
+
+O teste de dois servidores usa `AI_MEMORY_TEST_SERVER_A`, `AI_MEMORY_TEST_SERVER_B` e,
+opcionalmente, `AI_MEMORY_TEST_TOKEN`. Sem as duas URLs ele é marcado como pulado.
+
+O gate de briefing deve usar o hook nativo num servidor descartável com marker montado. O resultado
+esperado é `hookSpecificOutput.additionalContext` contendo uma página `_rules/` fixada e
+`handoffs/latest.md`; um `{}` vazio não prova briefing e normalmente indica autenticação ausente.
 
 Os testes de integração que precisam de rede local são marcados como pulados quando o servidor não
 está disponível. Isso permite executar a suíte pura sem transformar Docker parado em falha falsa.

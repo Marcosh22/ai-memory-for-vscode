@@ -155,3 +155,31 @@ export async function writePage(
   }
   return callTool('memory_write_page', args, options);
 }
+
+export interface BeginHandoffInput {
+  readonly workspace: string;
+  readonly project: string;
+  readonly summary: string;
+  readonly openQuestions?: readonly string[];
+  readonly nextSteps?: readonly string[];
+  readonly filesTouched?: readonly string[];
+}
+
+/** Cria um checkpoint explícito sem fingir que a sessão do agente terminou. */
+export async function beginHandoff(
+  input: BeginHandoffInput,
+  options: ClientOptions,
+): Promise<unknown> {
+  return callTool(
+    'memory_handoff_begin',
+    {
+      workspace: input.workspace,
+      project: input.project,
+      summary: input.summary,
+      open_questions: [...(input.openQuestions ?? [])],
+      next_steps: [...(input.nextSteps ?? [])],
+      files_touched: [...(input.filesTouched ?? [])],
+    },
+    options,
+  );
+}

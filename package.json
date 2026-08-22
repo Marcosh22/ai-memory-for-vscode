@@ -1,15 +1,14 @@
 {
-  "name": "ai-memory-vscode",
-  "displayName": "AI Memory",
+  "name": "ai-memory-for-vs-code",
+  "displayName": "AI Memory For VS Code",
   "description": "Compartilhe o contexto do projeto entre Claude Code, Codex e GitHub Copilot.",
   "icon": "resources/ai-memory-icon.png",
   "galleryBanner": {
     "color": "#17103D",
     "theme": "dark"
   },
-  "version": "0.0.2",
+  "version": "0.1.0-beta.1",
   "publisher": "Marcosh22",
-  "private": true,
   "license": "MIT",
   "keywords": [
     "ai",
@@ -30,6 +29,14 @@
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Marcosh22/ai-memory-for-vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/Marcosh22/ai-memory-for-vscode/issues"
+  },
+  "homepage": "https://github.com/Marcosh22/ai-memory-for-vscode",
   "contributes": {
     "mcpServerDefinitionProviders": [
       {
@@ -87,6 +94,11 @@
         "title": "AI Memory: Ver handoff aberto"
       },
       {
+        "command": "aiMemory.saveHandoff",
+        "title": "AI Memory: Salvar handoff agora",
+        "icon": "$(save)"
+      },
+      {
         "command": "aiMemory.installRouting",
         "title": "AI Memory: Instalar roteamento nas instruções do Copilot"
       },
@@ -142,6 +154,25 @@
       {
         "command": "aiMemory.githubSyncNow",
         "title": "AI Memory: Sincronizar com GitHub"
+      },
+      {
+        "command": "aiMemory.publishCheckpoint",
+        "title": "AI Memory: Publicar checkpoint no GitHub",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "aiMemory.configureContinuity",
+        "title": "AI Memory: Preparar projeto para continuidade"
+      },
+      {
+        "command": "aiMemory.finishAndSync",
+        "title": "AI Memory: Encerrar trabalho e sincronizar",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "aiMemory.prepareToContinue",
+        "title": "AI Memory: Preparar para continuar",
+        "icon": "$(run-all)"
       },
       {
         "command": "aiMemory.explainUnknownProject",

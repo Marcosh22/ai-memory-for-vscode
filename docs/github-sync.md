@@ -8,6 +8,11 @@ servidor remoto e sem colocar o SQLite sob controle de versão.
 O fluxo é sempre iniciado por uma pessoa. Não há timer, watcher, push ao encerrar o editor ou
 pull ao abrir um projeto.
 
+A extensão oferece dois fluxos compostos, ainda iniciados explicitamente:
+
+- **Encerrar trabalho e sincronizar**: finaliza a sessão, grava `handoffs/latest.md` e publica;
+- **Preparar para continuar**: recebe a memória, valida o checkpoint e a configuração dos agentes.
+
 ## Modelo
 
 ```text
@@ -78,6 +83,9 @@ GitHub; diff e resolução página a página ficam para uma versão futura.
 - Criptografia ponta a ponta.
 - Permissões por página ou por usuário.
 - Outros provedores além de remotos Git compatíveis com o Git instalado.
+
+`handoffs/latest.md` é uma página consolidada comum e por isso entra no schema. O estado do handoff
+real — ID, autoria operacional, aceite e expiração — continua fora dele.
 
 Sessões consolidadas aparecem normalmente porque são páginas Markdown sob `sessions/`. Para
 portar observações e handoffs com fidelidade, o upstream precisa oferecer um contrato de

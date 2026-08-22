@@ -32,7 +32,7 @@ describe('SyncRepository', () => {
 
     const first = new SyncRepository(path.join(root, 'first'), remote, 'ai-memory-sync');
     await first.initialize();
-    first.writeBundle(bundle('# Primeira versão'));
+    first.writeBundle(bundle('# Primeira versão\n'));
     await first.commit('primeira memória');
     const published = await first.push();
 
@@ -44,7 +44,7 @@ describe('SyncRepository', () => {
     await second.checkoutRemote(remoteCommit);
     const restored = await second.readBundleAt(remoteCommit);
 
-    assert.equal(restored.pages[0]?.body, '# Primeira versão');
+    assert.equal(restored.pages[0]?.body, '# Primeira versão\n');
     assert.equal(restored.project.project, 'app');
   });
 

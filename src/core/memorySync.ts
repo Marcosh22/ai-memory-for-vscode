@@ -281,7 +281,7 @@ export async function parseMemoryBundle(
     if (Buffer.byteLength(body, 'utf8') > MAX_PAGE_BYTES) {
       throw new Error(`página excede o limite de 2 MiB: ${raw.path}`);
     }
-    const page = portablePage({
+    let page = portablePage({
       path: raw.path,
       title: raw.title,
       kind: raw.kind,
@@ -292,7 +292,26 @@ export async function parseMemoryBundle(
       body,
     });
     if (page.hash !== raw.hash) {
-      throw new Error(`conteúdo divergente do manifesto: ${raw.path}`);
+      // Git pode materializar Markdown com CRLF mesmo quando o manifesto foi
+      // criado sobre LF (por configuração global, atributos ou um checkout
+      // antigo). Só aceitamos a divergência quando normalizar *exclusivamente*
+      // os finais de linha reproduz exatamente o hash assinado pelo manifesto.
+      // Qualquer outra alteração continua falhando fechada.
+      const normalizedBody = body.replace(/\r\n/g, '\n');
+      const normalized = portablePage({
+        path: raw.path,
+        title: raw.title,
+        kind: raw.kind,
+        tier: raw.tier,
+        pinned: raw.pinned,
+        tags: raw.tags,
+        expiresAt: raw.expires_at,
+        body: normalizedBody,
+      });
+      if (normalized.hash !== raw.hash) {
+        throw new Error(`conteúdo divergente do manifesto: ${raw.path}`);
+      }
+      page = normalized;
     }
     pages.push(page);
   }

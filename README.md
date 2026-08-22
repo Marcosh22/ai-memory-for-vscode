@@ -1,4 +1,4 @@
-# AI Memory for VS Code
+# AI Memory For VS Code
 
 Compartilhe o contexto do seu projeto entre Claude Code, Codex e GitHub Copilot.
 
@@ -122,13 +122,14 @@ Cada computador mantém seu próprio Docker e seu próprio token. Para compartil
 
 1. Use um repositório GitHub **privado**, separado do código do produto.
 2. Configure uma branch dedicada, normalmente `ai-memory-sync`.
-3. Na primeira máquina, escolha **Push**.
-4. Nas outras máquinas, configure o mesmo repositório e escolha **Pull**.
-5. Antes de trocar de máquina, use **Sincronizar** depois de registrar o estado atual.
+3. Na máquina de origem, use **AI Memory: Encerrar trabalho e sincronizar**.
+4. Na máquina de destino, configure o mesmo repositório e use
+   **AI Memory: Preparar para continuar**.
+5. A extensão executa o Pull, valida o checkpoint e informa a prontidão de cada agente.
 
 O GitHub Sync transporta páginas consolidadas e mantém histórico. Ele não transporta o SQLite,
-tokens, observações brutas dos hooks nem handoffs transitórios. Para um checkpoint portátil, peça
-ao agente para atualizar `notes/current-state.md` antes do Push.
+tokens, observações brutas dos hooks nem o estado transitório dos handoffs. O comando de saída
+materializa o estado útil em `handoffs/latest.md` antes do Push.
 
 ## Workspace com documentos e um repositório interno
 
@@ -166,6 +167,9 @@ separado e não o misture ao repositório do produto.
 - A sincronização entre máquinas é manual;
 - Conflitos de edição são apresentados para uma escolha explícita;
 - Exclusões ainda não são propagadas pelo protocolo de sincronização;
+- O hash do manifesto continua bloqueando alterações reais, mas diferenças
+  exclusivamente de final de linha (LF/CRLF) são normalizadas na leitura para
+  permitir sincronização entre Windows, macOS e Linux;
 - Handoffs e observações brutas ficam no servidor local;
 - O servidor Docker precisa estar iniciado para leitura e captura funcionarem.
 
@@ -177,9 +181,17 @@ separado e não o misture ao repositório do produto.
 | **AI Memory: Buscar na memória** | Pesquisa páginas e decisões do projeto (`Ctrl+Alt+M`) |
 | **AI Memory: Atualizar** | Atualiza a árvore e o handoff exibido |
 | **AI Memory: Ver handoff aberto** | Abre o handoff sem consumi-lo |
+| **AI Memory: Salvar handoff agora** | Cria um checkpoint explícito para continuar em outro agente |
+| **AI Memory: Publicar checkpoint no GitHub** | Versiona status e handoff para continuar em outra máquina |
+| **AI Memory: Encerrar trabalho e sincronizar** | Finaliza sessão, checkpoint e commit remoto |
+| **AI Memory: Preparar para continuar** | Importa memória e valida a prontidão dos agentes |
 | **AI Memory: Verificar conexão** | Testa o servidor local |
 | **AI Memory: Gerenciar GitHub Sync** | Configura Pull, Push, Sincronizar e Histórico |
 | **AI Memory: Abrir log** | Mostra o diagnóstico da extensão |
+
+O checkpoint é explícito porque seu resumo passa a fazer parte do histórico do repositório
+configurado. Com briefing habilitado, o SessionStart injeta páginas fixadas e regras sem exigir que
+o usuário informe o path ao agente.
 
 ## Solução de problemas
 
@@ -211,6 +223,7 @@ Detalhes de arquitetura, testes, contrato da API e decisões de implementação 
 - `docs/development.md`
 - `docs/api-shapes.md`
 - `docs/github-sync.md`
+- `docs/continuity-plan.md`
 
 ```bash
 npm install

@@ -9,6 +9,8 @@ import {
   detectCodexRouting,
   detectClaudeHooks,
   detectClaudeHooksAuth,
+  countClaudeHooks,
+  deduplicateClaudeHooks,
   detectClaudeMcp,
   detectCopilotRouting,
   downloadWrapper,
@@ -18,6 +20,7 @@ import {
 } from '../core/setup';
 import { installCopilotRouting } from './routing';
 import { startServerFlow } from './startServer';
+import { configurePortableProject, portableConfigReady } from './continuity';
 
 /**
  * Onboarding num comando só.
@@ -156,6 +159,21 @@ async function inspect(session: Session, storageDir: string): Promise<Step[]> {
     run: serverOk ? undefined : async () => startServerFlow(),
   });
 
+  const portableReady = await portableConfigReady(session);
+  steps.push({
+    id: 'portable-project',
+    label: 'Projeto · continuidade',
+    detail: !folder
+      ? 'abra uma pasta para fixar identidade e briefing'
+      : portableReady
+        ? 'identidade, briefing e branch por projeto configurados'
+        : 'fixa workspace/project e injeta regras no início de cada sessão',
+    state: !folder ? 'blocked' : portableReady ? 'ok' : 'missing',
+    run: folder && !portableReady
+      ? async () => configurePortableProject(session, storageDir)
+      : undefined,
+  });
+
   // 2. CLI — necessário para configurar os agentes externos
   steps.push({
     id: 'cli',
@@ -186,18 +204,37 @@ async function inspect(session: Session, storageDir: string): Promise<Step[]> {
   // 3. captura do Claude Code — o passo que faz a memória existir
   const hooksOk = detectClaudeHooks(home);
   const hooksAuthOk = !token || !hooksOk || detectClaudeHooksAuth(home, token);
+  const claudeHookCount = countClaudeHooks(home);
+  const claudeHooksDuplicated = claudeHookCount > 9;
   steps.push({
     id: 'claude-hooks',
     label: 'Claude Code · captura',
     detail: !hooksOk
-      ? 'sem isto nada grava memória — os hooks capturam prompts, tool calls e o handoff no fim da sessão'
+      ? 'Stop captura ao fim de cada resposta; SessionEnd grava o handoff ao encerrar a sessão'
+      : claudeHooksDuplicated
+        ? `${claudeHookCount} grupos do ai-memory instalados; o esperado é 9 — cada evento está sendo capturado mais de uma vez`
       : hooksAuthOk
         ? 'hooks instalados'
         : 'hooks instalados MAS sem token: cada evento toma 401 e a captura falha em silêncio',
-    state: hooksOk ? (hooksAuthOk ? 'ok' : 'warning') : 'missing',
+    state: hooksOk ? (hooksAuthOk && !claudeHooksDuplicated ? 'ok' : 'warning') : 'missing',
     run:
-      hooksOk && hooksAuthOk
+      hooksOk && hooksAuthOk && !claudeHooksDuplicated
         ? undefined
+        : claudeHooksDuplicated
+          ? async () => {
+              const confirmed = await vscode.window.showWarningMessage(
+                `Remover grupos duplicados do ai-memory em ~/.claude/settings.json? Um backup será criado antes da alteração.`,
+                { modal: true },
+                'Reparar',
+              );
+              if (confirmed !== 'Reparar') {
+                return;
+              }
+              const backup = deduplicateClaudeHooks(home);
+              if (backup) {
+                void vscode.window.showInformationMessage(`Hooks reparados. Backup: ${backup}`);
+              }
+            }
         : withCli((resolved) => installClaude(resolved, 'hooks', session, home)),
   });
 
@@ -222,7 +259,7 @@ async function inspect(session: Session, storageDir: string): Promise<Step[]> {
     id: 'codex-hooks',
     label: 'Codex · captura',
     detail: !codexHooksOk
-      ? 'captura prompts, ferramentas e handoff para o Claude Code encontrar depois'
+      ? 'Stop captura respostas; use Encerrar trabalho e sincronizar para garantir o handoff final'
       : codexHooksAuthOk
         ? 'hooks instalados; o Codex pedirá para confiar neles na primeira sessão'
         : 'hooks instalados MAS sem token: a captura receberia 401',
@@ -293,6 +330,13 @@ async function installClaude(
   home: string,
 ): Promise<void> {
   const { baseUrl, token } = await session.clientOptions();
+
+  // O QuickPick mantém closures da inspeção inicial. Se outro passo do fluxo
+  // já instalou os hooks, não os acrescente novamente com estado obsoleto.
+  if (what === 'hooks' && detectClaudeHooks(home) && (!token || detectClaudeHooksAuth(home, token))) {
+    void vscode.window.showInformationMessage('Os hooks do Claude Code já estão instalados.');
+    return;
+  }
 
   const target = what === 'hooks' ? '~/.claude/settings.json' : '~/.claude.json';
   const confirmed = await vscode.window.showInformationMessage(
@@ -377,7 +421,7 @@ async function installCodex(
     hooks: {
       title: 'Instalar os hooks de captura do Codex?',
       target: '~/.codex/hooks.json',
-      effect: 'O Codex registrará prompts, ferramentas e handoffs automaticamente.',
+      effect: 'Stop captura respostas; a extensão finaliza explicitamente a sessão antes de sincronizar.',
     },
     mcp: {
       title: 'Registrar o ai-memory no MCP do Codex?',

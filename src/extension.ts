@@ -8,10 +8,12 @@ import { HandoffContentProvider, HANDOFF_SCHEME, maybeNotifyHandoff, showHandoff
 import { openPage, PageContentProvider, SCHEME, WikilinkProvider } from './ui/page';
 import { installCopilotRouting } from './ui/routing';
 import { showSearch } from './ui/search';
+import { saveHandoff } from './ui/saveHandoff';
 import { showSetup } from './ui/setup';
 import { selectFolder, showActions, StatusBar } from './ui/status';
 import { startServerFlow } from './ui/startServer';
 import { GitHubSyncManager } from './ui/sync';
+import { configurePortableProject } from './ui/continuity';
 import { MemoryTreeProvider } from './ui/tree';
 
 /**
@@ -26,16 +28,17 @@ export function activate(context: vscode.ExtensionContext): void {
   const secrets = new Secrets(context.secrets);
   const session = new Session(context, secrets);
   const provider = new AiMemoryServerProvider(secrets);
-  const statusBar = new StatusBar(session);
+  const githubSync = new GitHubSyncManager(context, session);
+  const statusBar = new StatusBar(session, githubSync);
   const tree = new MemoryTreeProvider(session);
   const pages = new PageContentProvider(session);
   const handoffs = new HandoffContentProvider(session);
-  const githubSync = new GitHubSyncManager(context, session);
 
   context.subscriptions.push(
     { dispose: () => secrets.dispose() },
     session,
     { dispose: () => provider.dispose() },
+    githubSync,
     statusBar,
     { dispose: () => tree.dispose() },
     { dispose: () => handoffs.dispose() },
@@ -72,6 +75,14 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('aiMemory.githubSyncPull', () => githubSync.pull()),
     vscode.commands.registerCommand('aiMemory.githubSyncPush', () => githubSync.push()),
     vscode.commands.registerCommand('aiMemory.githubSyncNow', () => githubSync.synchronize()),
+    vscode.commands.registerCommand('aiMemory.publishCheckpoint', () => githubSync.publishCheckpoint()),
+    vscode.commands.registerCommand('aiMemory.configureContinuity', () =>
+      configurePortableProject(session, context.globalStorageUri.fsPath),
+    ),
+    vscode.commands.registerCommand('aiMemory.finishAndSync', () =>
+      githubSync.finishAndSynchronize(context.globalStorageUri.fsPath),
+    ),
+    vscode.commands.registerCommand('aiMemory.prepareToContinue', () => githubSync.prepareToContinue()),
     vscode.commands.registerCommand('aiMemory.actions', () => showActions(session)),
     vscode.commands.registerCommand('aiMemory.selectFolder', () => selectFolder(session)),
     vscode.commands.registerCommand('aiMemory.startServer', () => startServerFlow()),
@@ -81,6 +92,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     vscode.commands.registerCommand('aiMemory.installRouting', () => installCopilotRouting(session)),
     vscode.commands.registerCommand('aiMemory.showHandoff', () => showHandoff()),
+    vscode.commands.registerCommand('aiMemory.saveHandoff', () => saveHandoff(session)),
     vscode.commands.registerCommand('aiMemory.refresh', async () => {
       session.invalidate();
       await session.refresh('atualização manual');
@@ -206,6 +218,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const { scope } = session.current;
     if (scope) {
       log.info(describeScope(scope));
+      await githubSync.checkForRemoteChanges();
     }
   })();
 }

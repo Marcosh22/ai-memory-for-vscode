@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import type { Session, SessionState } from '../core/session';
+import type { GitHubSyncManager } from './sync';
 
 /**
  * Item permanente na status bar — projeto ativo e estado da conexão.
@@ -10,14 +11,17 @@ import type { Session, SessionState } from '../core/session';
  */
 export class StatusBar implements vscode.Disposable {
   private readonly item: vscode.StatusBarItem;
-  private readonly subscription: vscode.Disposable;
+  private readonly subscriptions: readonly vscode.Disposable[];
 
-  constructor(session: Session) {
+  constructor(session: Session, private readonly sync: GitHubSyncManager) {
     this.item = vscode.window.createStatusBarItem('aiMemory.status', vscode.StatusBarAlignment.Left, 40);
     this.item.name = 'AI Memory';
     this.item.command = 'aiMemory.actions';
     this.render(session.current);
-    this.subscription = session.onDidChange((state) => this.render(state));
+    this.subscriptions = [
+      session.onDidChange((state) => this.render(state)),
+      sync.onDidChange(() => this.render(session.current)),
+    ];
     this.item.show();
   }
 
@@ -34,6 +38,7 @@ export class StatusBar implements vscode.Disposable {
       if (scope.markerPath) {
         lines.push(`Marker: \`${scope.markerPath}\``);
       }
+      lines.push(this.sync.describe({ workspace: scope.workspace, project: scope.project }));
     } else {
       lines.push('Nenhuma pasta aberta.');
     }
@@ -97,7 +102,7 @@ export class StatusBar implements vscode.Disposable {
   }
 
   dispose(): void {
-    this.subscription.dispose();
+    for (const subscription of this.subscriptions) subscription.dispose();
     this.item.dispose();
   }
 }
@@ -144,6 +149,26 @@ export async function showActions(session: Session): Promise<void> {
   }
 
   items.push(
+    {
+      label: '$(debug-stop) Encerrar trabalho e sincronizar',
+      description: 'finaliza sessão, checkpoint e commit remoto',
+      command: 'aiMemory.finishAndSync',
+    },
+    {
+      label: '$(run-all) Preparar para continuar',
+      description: 'pull, checkpoint e prontidão dos agentes',
+      command: 'aiMemory.prepareToContinue',
+    },
+    {
+      label: '$(save) Salvar handoff agora',
+      description: 'checkpoint explícito para trocar de agente',
+      command: 'aiMemory.saveHandoff',
+    },
+    {
+      label: '$(cloud-upload) Publicar checkpoint no GitHub',
+      description: 'status portátil para outra máquina',
+      command: 'aiMemory.publishCheckpoint',
+    },
     {
       label: '$(cloud) GitHub Sync',
       description: 'pull e push manuais da memória',

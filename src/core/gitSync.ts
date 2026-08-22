@@ -175,7 +175,7 @@ export class SyncRepository {
   }
 
   private async show(revision: string, file: string): Promise<string> {
-    return git(['show', `${revision}:${gitPath(file)}`], this.directory, 'ler versão');
+    return git(['show', `${revision}:${gitPath(file)}`], this.directory, 'ler versão', true);
   }
 
   private async remoteTrackingCommit(): Promise<string | undefined> {
@@ -233,7 +233,12 @@ function gitPath(file: string): string {
   return file.replaceAll('\\', '/');
 }
 
-async function git(args: readonly string[], cwd: string, operation: string): Promise<string> {
+async function git(
+  args: readonly string[],
+  cwd: string,
+  operation: string,
+  preserveOutput = false,
+): Promise<string> {
   logger.info(`GitHub Sync: ${operation}`);
   try {
     const { stdout } = await execFileAsync('git', [...args], {
@@ -244,7 +249,7 @@ async function git(args: readonly string[], cwd: string, operation: string): Pro
       maxBuffer: 8 * 1024 * 1024,
       env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
     });
-    return stdout.trim();
+    return preserveOutput ? stdout : stdout.trim();
   } catch (error) {
     throw translateGitError(error, operation);
   }

@@ -5,6 +5,8 @@ import * as path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
 import {
+  countClaudeHooks,
+  deduplicateClaudeHooks,
   codexConfigDir,
   detectCodexHooks,
   detectCodexHooksAuth,
@@ -102,6 +104,50 @@ describe('hooks do Claude Code', () => {
   it('JSON corrompido não derruba a detecção', () => {
     const home = fakeHome('h5', { '.claude/settings.json': '{ isto não é json' });
     assert.equal(detectClaudeHooks(home), false);
+  });
+
+  it('conta grupos do ai-memory sem contar hooks de terceiros', () => {
+    const aiMemory = { hooks: [{ type: 'command', command: 'ai-memory hook' }] };
+    const home = fakeHome('h7', {
+      '.claude/settings.json': JSON.stringify({
+        hooks: {
+          SessionStart: [aiMemory, aiMemory, { hooks: [{ command: 'outro-hook' }] }],
+          SessionEnd: [aiMemory],
+        },
+      }),
+    });
+    assert.equal(countClaudeHooks(home), 3);
+  });
+
+  it('remove somente duplicatas idênticas do ai-memory e cria backup', () => {
+    const aiMemory = { matcher: '', hooks: [{ type: 'command', command: 'ai-memory hook' }] };
+    const thirdParty = { matcher: '', hooks: [{ type: 'command', command: 'outro-hook' }] };
+    const home = fakeHome('h8', {
+      '.claude/settings.json': JSON.stringify({
+        model: 'opus',
+        hooks: { SessionStart: [aiMemory, thirdParty, aiMemory, aiMemory] },
+      }),
+    });
+
+    const backup = deduplicateClaudeHooks(home);
+    const repaired = JSON.parse(
+      fs.readFileSync(path.join(home, '.claude', 'settings.json'), 'utf8'),
+    ) as { model: string; hooks: { SessionStart: unknown[] } };
+
+    assert.ok(backup);
+    assert.equal(fs.existsSync(backup), true);
+    assert.equal(repaired.model, 'opus');
+    assert.deepEqual(repaired.hooks.SessionStart, [aiMemory, thirdParty]);
+    assert.equal(countClaudeHooks(home), 1);
+  });
+
+  it('não reescreve quando não há duplicata', () => {
+    const home = fakeHome('h9', {
+      '.claude/settings.json': JSON.stringify({
+        hooks: { SessionStart: [{ hooks: [{ command: 'ai-memory hook' }] }] },
+      }),
+    });
+    assert.equal(deduplicateClaudeHooks(home), undefined);
   });
 });
 

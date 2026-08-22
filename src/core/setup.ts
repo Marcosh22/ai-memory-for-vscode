@@ -63,6 +63,73 @@ export function detectClaudeHooksAuth(homeDir: string, token: string): boolean {
   return hooks !== undefined && containsConfigValue(hooks, token);
 }
 
+/** Quantidade de grupos de hook que pertencem ao ai-memory. */
+export function countClaudeHooks(homeDir: string): number {
+  const settings = readJson(path.join(homeDir, '.claude', 'settings.json'));
+  const hooks = (settings as Record<string, unknown> | undefined)?.['hooks'];
+  if (!hooks || typeof hooks !== 'object') {
+    return 0;
+  }
+  let count = 0;
+  for (const groups of Object.values(hooks as Record<string, unknown>)) {
+    if (!Array.isArray(groups)) {
+      continue;
+    }
+    count += groups.filter((group) => containsConfigValue(group, 'ai-memory')).length;
+  }
+  return count;
+}
+
+/**
+ * Remove apenas grupos idênticos do ai-memory e preserva hooks de terceiros.
+ * Retorna o backup criado, ou undefined quando não havia duplicatas.
+ */
+export function deduplicateClaudeHooks(homeDir: string): string | undefined {
+  const target = path.join(homeDir, '.claude', 'settings.json');
+  const settings = readJson(target);
+  if (!settings || typeof settings !== 'object') {
+    return undefined;
+  }
+  const root = settings as Record<string, unknown>;
+  const hooks = root['hooks'];
+  if (!hooks || typeof hooks !== 'object') {
+    return undefined;
+  }
+
+  let changed = false;
+  const nextHooks: Record<string, unknown> = {};
+  for (const [event, groups] of Object.entries(hooks as Record<string, unknown>)) {
+    if (!Array.isArray(groups)) {
+      nextHooks[event] = groups;
+      continue;
+    }
+    const seen = new Set<string>();
+    nextHooks[event] = groups.filter((group) => {
+      if (!containsConfigValue(group, 'ai-memory')) {
+        return true;
+      }
+      const signature = JSON.stringify(group);
+      if (seen.has(signature)) {
+        changed = true;
+        return false;
+      }
+      seen.add(signature);
+      return true;
+    });
+  }
+  if (!changed) {
+    return undefined;
+  }
+
+  const backup = `${target}.ai-memory-backup-${Date.now()}`;
+  fs.copyFileSync(target, backup);
+  root['hooks'] = nextHooks;
+  const temporary = `${target}.tmp`;
+  fs.writeFileSync(temporary, `${JSON.stringify(root, null, 2)}\n`, 'utf8');
+  fs.renameSync(temporary, target);
+  return backup;
+}
+
 /** Entrada MCP do ai-memory na config do Claude Code. */
 export function detectClaudeMcp(homeDir: string): boolean {
   const config = readJson(path.join(homeDir, '.claude.json'));

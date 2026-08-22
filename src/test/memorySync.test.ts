@@ -64,6 +64,25 @@ describe('bundle portátil', () => {
     await assert.rejects(() => readMemoryBundle(root), /conteúdo divergente/);
   });
 
+  it('aceita somente conversão CRLF quando o manifesto foi criado sobre LF', async () => {
+    const root = temporaryDirectory();
+    const original = bundle(page('_rules/project-conventions.md', '# Regras\n\n- Uma\n- Duas\n'));
+    writeMemoryBundle(root, original);
+    const target = path.join(
+      root,
+      '.ai-memory-sync',
+      'pages',
+      '_rules',
+      'project-conventions.md',
+    );
+    fs.writeFileSync(target, '# Regras\r\n\r\n- Uma\r\n- Duas\r\n', 'utf8');
+
+    const restored = await readMemoryBundle(root);
+
+    assert.equal(restored.pages[0]?.body, '# Regras\n\n- Uma\n- Duas\n');
+    assert.equal(restored.pages[0]?.hash, original.pages[0]?.hash);
+  });
+
   it('recusa traversal e caminhos não portáteis', () => {
     assert.throws(() => assertSafePagePath('../segredo.md'));
     assert.throws(() => assertSafePagePath('/absoluto.md'));
