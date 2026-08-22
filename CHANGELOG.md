@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0-beta.1 — 2026-08-22
+## 0.1.0 (pré-release) — 2026-08-22
 
 Primeiro release beta voltado à continuidade entre agentes e máquinas.
 
